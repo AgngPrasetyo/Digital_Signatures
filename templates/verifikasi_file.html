@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verifikasi Signature</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen py-10 px-4">
+
+    <div class="w-full max-w-screen-sm mx-auto bg-white p-4 sm:p-6 rounded-xl shadow-md space-y-6">
+        <h2 class="text-2xl font-semibold text-blue-700 text-center">Verifikasi Signature</h2>
+
+        <form method="POST" class="space-y-4">
+            {% if error %}
+            <div class="bg-red-100 text-red-800 px-4 py-2 rounded">{{ error }}</div>
+            {% endif %}
+
+            <div>
+                <label for="signature" class="block font-medium mb-1">Signature (Encrypted Hash):</label>
+                <textarea name="signature" rows="3"
+                          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                          required>{{ request.form.signature or '' }}</textarea>
+            </div>
+
+            <div>
+                <label class="block font-medium mb-1">Public Key e:</label>
+                <div class="relative">
+                    <input id="inputE" type="password" name="e"
+                           class="w-full border border-gray-300 rounded px-3 py-2 pr-10 focus:outline-none focus:ring focus:ring-blue-200"
+                           required value="{{ request.form.e or '' }}" />
+                    <button type="button" onclick="toggleVisibility('inputE', this)"
+                            class="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-blue-500 hover:text-blue-700 focus:outline-none">
+                        
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-medium mb-1">Modulus:</label>
+                <div class="relative">
+                    <input id="inputN" type="password" name="n"
+                           class="w-full border border-gray-300 rounded px-3 py-2 pr-10 focus:outline-none focus:ring focus:ring-blue-200"
+                           required value="{{ request.form.n or '' }}" />
+                    <button type="button" onclick="toggleVisibility('inputN', this)"
+                            class="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-blue-500 hover:text-blue-700 focus:outline-none">
+                        
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-green-500 text-white font-semibold py-2 rounded hover:bg-green-600 transition">
+                Verifikasi Signature
+            </button>
+        </form>
+
+        {% if decrypted is not none %}
+        <div class="mt-6 p-4 rounded {{ 'bg-green-100 text-green-800' if valid else 'bg-red-100 text-red-800' }}">
+            {% if valid %}
+            <p><strong>Hasil verifikasi:</strong> Signature Valid </p>
+            {% else %}
+            <p><strong>Hasil verifikasi:</strong> Signature Tidak Valid </p>
+            {% endif %}
+            <p class="mt-2 break-words"><strong>Hash yang didekripsi:</strong><br>{{ decrypted }}</p>
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-6">
+            <a href="/" class="inline-block px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
+                Kembali ke Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleVisibility(id, button) {
+            const input = document.getElementById(id);
+            if (input.type === "password") {
+                input.type = "text";
+                button.textContent = "";
+            } else {
+                input.type = "password";
+                button.textContent = "";
+            }
+        }
+    </script>
+
+</body>
+</html>

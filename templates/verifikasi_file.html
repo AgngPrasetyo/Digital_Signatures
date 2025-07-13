@@ -58,11 +58,11 @@
         {% if decrypted is not none %}
         <div class="mt-6 p-4 rounded {{ 'bg-green-100 text-green-800' if valid else 'bg-red-100 text-red-800' }}">
             {% if valid %}
-            <p><strong>Hasil verifikasi:</strong> Valid Signature  </p>
+            <p><strong>Result Verification:</strong> Valid Signature  </p>
             {% else %}
-            <p><strong>Hasil verifikasi:</strong> Invalid Signature </p>
+            <p><strong>Result Verification:</strong> Invalid Signature </p>
             {% endif %}
-            <p class="mt-2 break-words"><strong>Hash yang didekripsi:</strong><br>{{ decrypted }}</p>
+            <p class="mt-2 break-words"><strong>Decrypt Result:</strong><br>{{ decrypted }}</p>
         </div>
         {% endif %}
 

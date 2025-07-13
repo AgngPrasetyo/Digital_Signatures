@@ -42,14 +42,14 @@ def decrypt_rsa(cipher, e, n):
     try:
         return base64.b64decode(decrypted_b64).decode()
     except Exception:
-        return "[Gagal decode base64 - kemungkinan signature atau key salah]"
+        return "[signature or key might be incorrect]"
 
 def sha256_hash(message):
     import hashlib
     return hashlib.sha256(message.encode()).hexdigest()
 
 def generate_keys_auto():
-    # Pilih dua bilangan prima acak
+   
     p = nextprime(random.randint(100, 300))
     q = nextprime(random.randint(301, 500))
     while p == q:
@@ -58,7 +58,7 @@ def generate_keys_auto():
     n = p * q
     phi = (p - 1) * (q - 1)
 
-    # Cari e yang relatif prima dengan phi
+    
     e = nextprime(random.randint(3, phi // 2))
     while gcd(e, phi) != 1:
         e += 2

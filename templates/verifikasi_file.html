@@ -19,7 +19,7 @@
             <div>
                 <label for="signature" class="block font-medium mb-1">Signature (Encrypted Hash):</label>
                 <textarea name="signature" rows="3"
-                          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 resize-none"
                           required>{{ request.form.signature or '' }}</textarea>
             </div>
 
@@ -31,7 +31,6 @@
                            required value="{{ request.form.e or '' }}" />
                     <button type="button" onclick="toggleVisibility('inputE', this)"
                             class="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-blue-500 hover:text-blue-700 focus:outline-none">
-                        
                     </button>
                 </div>
             </div>
@@ -44,7 +43,6 @@
                            required value="{{ request.form.n or '' }}" />
                     <button type="button" onclick="toggleVisibility('inputN', this)"
                             class="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-blue-500 hover:text-blue-700 focus:outline-none">
-                        
                     </button>
                 </div>
             </div>

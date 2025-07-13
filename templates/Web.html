@@ -18,19 +18,19 @@
 
         <div class="space-y-4">
             <div>
-                <label for="content" class="block font-medium mb-1">Pesan:</label>
-                <textarea id="content" rows="3" placeholder="Tulis pesan di sini..."
+                <label for="content" class="block font-medium mb-1">Message:</label>
+                <textarea id="content" rows="3" placeholder="Write message..."
                           class="w-full border border-gray-300 rounded px-3 py-2 resize-none focus:outline-none focus:ring focus:ring-blue-200"></textarea>
             </div>
 
             <div>
-                <label for="canvas" class="block font-medium mb-1">Gambar tanda tangan:</label>
+                <label for="canvas" class="block font-medium mb-1">Draw Signature:</label>
                 <canvas id="canvas"
                         class="w-full border border-gray-400 rounded bg-white"
                         style="height:150px;"></canvas>
                 <button onclick="clearCanvas()"
                         class="mt-2 px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 transition">
-                    Bersihkan Gambar
+                    Clear Canvas
                 </button>
             </div>
 
@@ -40,13 +40,13 @@
             </button>
 
             <div id="warning" class="hidden p-3 rounded border border-red-400 bg-red-100 text-red-700 text-sm text-center shadow">
-                Pesan peringatan akan tampil di sini.
+             
             </div>
         </div>
 
         <div class="text-center">
             <a href="/" class="inline-block px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
-                Kembali ke Dashboard
+                Return to Dashboard
             </a>
         </div>
     </div>
@@ -123,11 +123,11 @@
             const imgData = canvas.toDataURL("image/png");
 
             if (!content) {
-                showWarning("Silakan isi pesan terlebih dahulu.");
+                showWarning("Please Fill in The Message First.");
                 return;
             }
             if (!hasDrawn) {
-                showWarning("Silakan gambar tanda tangan Anda terlebih dahulu.");
+                showWarning("Please Draw Your Signature First.");
                 return;
             }
 

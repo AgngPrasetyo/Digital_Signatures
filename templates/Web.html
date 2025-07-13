@@ -5,24 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Generate Digital Signature QR</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+   
+        #canvas {
+            touch-action: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen py-10 px-4">
-
-    <div class="w-full max-w-screen-sm mx-auto bg-white p-4 sm:p-6 rounded-xl shadow-md space-y-6">
+    <div class="w-full max-w-screen-sm mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
         <h2 class="text-2xl font-semibold text-center text-blue-700">Generate Digital Signature QR (RSA)</h2>
 
         <div class="space-y-4">
             <div>
                 <label for="content" class="block font-medium mb-1">Pesan:</label>
                 <textarea id="content" rows="3" placeholder="Tulis pesan di sini..."
-                          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 resize-none"></textarea>
+                          class="w-full border border-gray-300 rounded px-3 py-2 resize-none focus:outline-none focus:ring focus:ring-blue-200"></textarea>
             </div>
 
             <div>
                 <label for="canvas" class="block font-medium mb-1">Gambar tanda tangan:</label>
-                <canvas id="canvas" width="500" height="150"
-                        class="w-full max-w-full border border-gray-400 rounded bg-white select-none resize-none"
-                        style="resize: none; user-select: none;"></canvas>
+                <canvas id="canvas"
+                        class="w-full border border-gray-400 rounded bg-white"
+                        style="height:150px;"></canvas>
                 <button onclick="clearCanvas()"
                         class="mt-2 px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 transition">
                     Bersihkan Gambar
@@ -39,7 +44,7 @@
             </div>
         </div>
 
-        <div class="text-center mt-6">
+        <div class="text-center">
             <a href="/" class="inline-block px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
                 Kembali ke Dashboard
             </a>
@@ -49,50 +54,26 @@
     <script>
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
-        let drawing = false;
-        let hasDrawn = false; // flag untuk memastikan user benar-benar menggambar
+        let drawing = false, hasDrawn = false;
 
-        // Mouse events
-        canvas.addEventListener("mousedown", () => drawing = true);
-        canvas.addEventListener("mouseup", () => {
-            drawing = false;
-            ctx.beginPath();
-        });
-        canvas.addEventListener("mousemove", draw);
-
-        // Touch events
-        canvas.addEventListener("touchstart", (e) => {
-            drawing = true;
-            drawTouch(e);
-        });
-        canvas.addEventListener("touchmove", (e) => {
-            drawTouch(e);
-        });
-        canvas.addEventListener("touchend", () => {
-            drawing = false;
-            ctx.beginPath();
-        });
-
-        function draw(e) {
-            if (!drawing) return;
-            hasDrawn = true;
-            ctx.lineWidth = 2;
-            ctx.lineCap = "round";
-            ctx.strokeStyle = "#000";
-            ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
-        }
-
-        function drawTouch(e) {
-            if (!drawing) return;
-            hasDrawn = true;
+      
+        function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+        window.addEventListener("load", resizeCanvas);
+        window.addEventListener("resize", () => {
+           
+            ctx.resetTransform();
+            resizeCanvas();
+            clearCanvas();
+        });
 
+       
+        function drawLine(x, y) {
             ctx.lineWidth = 2;
             ctx.lineCap = "round";
             ctx.strokeStyle = "#000";
@@ -100,9 +81,28 @@
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(x, y);
-
-            e.preventDefault();
         }
+
+      
+        canvas.addEventListener("pointerdown", e => {
+            e.preventDefault();
+            drawing = true;
+            hasDrawn = true;
+            const x = e.offsetX, y = e.offsetY;
+            drawLine(x, y);
+        });
+        canvas.addEventListener("pointermove", e => {
+            if (!drawing) return;
+            drawLine(e.offsetX, e.offsetY);
+        });
+        canvas.addEventListener("pointerup", () => {
+            drawing = false;
+            ctx.beginPath();
+        });
+        canvas.addEventListener("pointerleave", () => {
+            drawing = false;
+            ctx.beginPath();
+        });
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -110,46 +110,35 @@
             hasDrawn = false;
         }
 
-        function showWarning(message) {
-            const warn = document.getElementById("warning");
-            warn.textContent = "⚠️ " + message;
-            warn.classList.remove("hidden");
+        function showWarning(msg) {
+            const w = document.getElementById("warning");
+            w.textContent = "⚠️ " + msg;
+            w.classList.remove("hidden");
         }
 
+        
         function generateSignature() {
             document.getElementById("warning").classList.add("hidden");
-
             const content = document.getElementById("content").value.trim();
-            const canvasData = canvas.toDataURL("image/png");
+            const imgData = canvas.toDataURL("image/png");
 
             if (!content) {
                 showWarning("Silakan isi pesan terlebih dahulu.");
                 return;
             }
-
             if (!hasDrawn) {
                 showWarning("Silakan gambar tanda tangan Anda terlebih dahulu.");
                 return;
             }
 
+          
             const form = document.createElement("form");
-            form.method = "POST";
-            form.action = "/sign_and_generate_qr";
-
-            const fields = {
-                content: content,
-                algorithm: "rsa",
-                signature_image: canvasData
-            };
-
-            for (const [name, value] of Object.entries(fields)) {
-                const input = document.createElement("input");
-                input.type = "hidden";
-                input.name = name;
-                input.value = value;
-                form.appendChild(input);
+            form.method = "POST"; form.action = "/sign_and_generate_qr";
+            for (let [k, v] of Object.entries({ content, algorithm: "rsa", signature_image: imgData })) {
+                const inp = document.createElement("input");
+                inp.type = "hidden"; inp.name = k; inp.value = v;
+                form.appendChild(inp);
             }
-
             document.body.appendChild(form);
             form.submit();
         }

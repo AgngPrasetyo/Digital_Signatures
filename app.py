@@ -9,6 +9,9 @@ import datetime
 from crypto_utils import encrypt_rsa, decrypt_rsa, sha256_hash, generate_keys_auto
 import re, os
 
+# Jika belum terpasang, install zoneinfo backport atau pytz:
+# pip install backports.zoneinfo pytz
+
 app = Flask(__name__)
 app.secret_key = "s3cr3t_key"
 
@@ -37,32 +40,35 @@ def sign_and_generate_qr():
     if not content:
         return "Pesan tidak boleh kosong", 400
 
-    # timestamps
-    now = datetime.datetime.now()
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo("Asia/Jakarta")
+    except ImportError:
+        import pytz
+        tz = pytz.timezone("Asia/Jakarta")
+    now = datetime.datetime.now(tz)
     display_ts = now.strftime("%Y-%m-%d %H:%M:%S")
-    file_ts = now.strftime("%Y-%m-%d_%H%M%S")
+    file_ts    = now.strftime("%Y-%m-%d_%H%M%S")
 
     if algorithm == 'rsa':
-      
         e, d, n = generate_keys_auto()
 
-       
         hashed_msg = sha256_hash(content)
-        signature = encrypt_rsa(hashed_msg, d, n)
+        signature  = encrypt_rsa(hashed_msg, d, n)
 
-        
+        # Buat PDF
         filename = f"signature_{file_ts}.pdf"
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
         pdf.multi_cell(0, 10, "Signature (Encrypted Hash):")
-        pdf.multi_cell(0, 10, signature)       
+        pdf.multi_cell(0, 10, signature)
         pdf.ln(2)
-        pdf.multi_cell(0, 10, f"Waktu Tanda Tangan: {display_ts}")
+        pdf.multi_cell(0, 10, f"Waktu Tanda Tangan (WIB): {display_ts}")
 
-      
+        # Tambahkan gambar tanda tangan jika ada
         if signature_img_data.startswith("data:image/png;base64,"):
-            img_b64 = re.sub(r"^data:image/.+;base64,", "", signature_img_data)
+            img_b64  = re.sub(r"^data:image/.+;base64,", "", signature_img_data)
             img_data = base64.b64decode(img_b64)
             if len(img_data) > 500:
                 img = Image.open(BytesIO(img_data))
@@ -74,27 +80,27 @@ def sign_and_generate_qr():
                 pdf.multi_cell(0, 10, "Tanda Tangan Pengguna:")
                 pdf.image(img_path, x=10, w=60)
 
-    
-        out_dir = os.path.join("static", "signed_files")
+        # Simpan PDF
+        out_dir   = os.path.join("static", "signed_files")
         os.makedirs(out_dir, exist_ok=True)
         full_path = os.path.join(out_dir, filename)
         with open(full_path, "wb") as f:
             f.write(pdf.output(dest='S').encode('latin-1'))
 
-        
-        base_url = request.host_url.rstrip('/')
-        public_url = f"{base_url}/static/signed_files/{filename}"
-        qr = qrcode.make(public_url)
-        buf = BytesIO()
+        # Generate QR code untuk link PDF
+        base_url  = request.host_url.rstrip('/')
+        public_url= f"{base_url}/static/signed_files/{filename}"
+        qr        = qrcode.make(public_url)
+        buf       = BytesIO()
         qr.save(buf, format='PNG')
-        qr_b64 = base64.b64encode(buf.getvalue()).decode()
+        qr_b64    = base64.b64encode(buf.getvalue()).decode()
 
-        
-        session['qr']       = qr_b64
-        session['pdf_url']  = public_url
-        session['signature']= signature      
-        session['modulus_n']= str(n)
-        session['public_e'] = str(e)
+        # Simpan hasil ke session
+        session['qr']        = qr_b64
+        session['pdf_url']   = public_url
+        session['signature'] = signature
+        session['modulus_n'] = str(n)
+        session['public_e']  = str(e)
 
         return redirect(url_for('result'))
 
@@ -129,12 +135,12 @@ def verify_file():
             return redirect(url_for('verify_file'))
 
         try:
-         
-            parts = re.findall(r'\d+', sig_input)
-            cipher = ",".join(parts)
-            decrypted = decrypt_rsa(cipher, int(e), int(n))
-            valid = "[Gagal decode base64" not in decrypted \
-                    and "signature or key might be incorrect" not in decrypted
+            parts    = re.findall(r'\d+', sig_input)
+            cipher   = ",".join(parts)
+            decrypted= decrypt_rsa(cipher, int(e), int(n))
+            valid    = not any(err in decrypted for err in [
+                            "signature or key might be incorrect"
+                         ])
 
             session['decrypted'] = decrypted
             session['valid']     = valid
@@ -144,10 +150,9 @@ def verify_file():
             flash(str(ex), "error")
             return redirect(url_for('verify_file'))
 
-    
     decrypted = session.pop('decrypted', None)
     valid     = session.pop('valid', None)
-    return render_template('verifikasi_file.html',
+    return render_template("verifikasi_file.html",
                            decrypted=decrypted,
                            valid=valid)
 
